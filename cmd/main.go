@@ -4,6 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"os"
+
+	"vitess.io/vitess/go/vt/sqlparser"
 )
 
 var dirname string
@@ -19,6 +21,15 @@ func init() {
 func main() {
 	parseFlags()
 
+	stmt, err := sqlparser.Parse(flag.Arg(0))
+
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to parse the SQL query: %v\n", err)
+		os.Exit(64)
+	}
+
+	fmt.Println(stmt)
+
 	files := findAllDataFiles(filename, dirname, fileglob)
 
 	store := createStore(files)
@@ -29,6 +40,8 @@ func main() {
 func parseFlags() {
 	flag.Usage = func() {
 		fmt.Println("Usage of yql:")
+		fmt.Println("")
+		fmt.Println("yql <storage flag> <SQL query>")
 		fmt.Println("")
 		fmt.Println("Use one of either -dir, -glob or -file as a storage flag.")
 		fmt.Println("")
@@ -42,4 +55,8 @@ func parseFlags() {
 		os.Exit(64)
 	}
 
+	if len(flag.Args()) != 1 {
+		fmt.Fprintln(os.Stderr, "Missing an SQL query.")
+		os.Exit(64)
+	}
 }
