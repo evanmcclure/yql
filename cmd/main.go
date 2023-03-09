@@ -20,7 +20,13 @@ func init() {
 func main() {
 	parseFlags()
 
-	var files []string
+	files := findAllDataFiles()
+
+	fmt.Println(files)
+
+}
+
+func findAllDataFiles() (files []string) {
 	if len(filename) != 0 {
 		fmt.Printf("Using file %s as storage.\n", filename)
 
@@ -53,8 +59,7 @@ func main() {
 		files = append(files, matches...)
 	}
 
-	fmt.Println(files)
-
+	return
 }
 
 func parseFlags() {
@@ -72,4 +77,5 @@ func parseFlags() {
 		fmt.Fprintln(os.Stderr, "Missing a storage flag.")
 		os.Exit(64)
 	}
+
 }
