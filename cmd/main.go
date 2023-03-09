@@ -4,7 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"path/filepath"
+
+	"gopkg.in/yaml.v3"
 )
 
 var dirname string
@@ -20,46 +21,25 @@ func init() {
 func main() {
 	parseFlags()
 
-	files := findAllDataFiles()
+	files := findAllDataFiles(filename, dirname, fileglob)
 
 	fmt.Println(files)
 
-}
-
-func findAllDataFiles() (files []string) {
-	if len(filename) != 0 {
-		fmt.Printf("Using file %s as storage.\n", filename)
-
-		files = append(files, filename)
-
-	} else if len(dirname) != 0 {
-		fmt.Printf("Using all YAML files in dir %s as storage.\n", dirname)
-
-		entries, err := os.ReadDir(dirname)
+	for _, f := range files {
+		data, err := os.ReadFile(f)
 
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Unable to open dir: %v\n", err)
-			os.Exit(74)
+			fmt.Fprintf(os.Stderr, "Skipping file %s: %v\n", f, err)
+			continue
 		}
 
-		for _, ent := range entries {
-			files = append(files, ent.Name())
+		var file struct{}
+		if err := yaml.Unmarshal(data, &file); err != nil {
+			fmt.Fprintf(os.Stderr, "Unable to parse YAML file %s: %v\n", f, err)
+			continue
 		}
-
-	} else if len(fileglob) != 0 {
-		fmt.Printf("Using all YAML files glob %s as storage.\n", dirname)
-
-		matches, err := filepath.Glob(fileglob)
-
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Unable to use glob: %v\n", err)
-			os.Exit(64)
-		}
-
-		files = append(files, matches...)
 	}
 
-	return
 }
 
 func parseFlags() {
